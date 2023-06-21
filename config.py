@@ -47,15 +47,15 @@ ff_fold_num = 0  # 使用五折划分的情况下，当前程序运行的五折�
 ffrad_seed = 233  # 随机打乱五折情况下的种子
 
 # npy模式下读取现有的已打包数据集npy文件，若npy_dir的每个对象为另一个list，则会在多数据集条件下进行合并
-npy_dir = [r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_images_128.npy",
-           r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_contour_200.npy"]
+# npy_dir = [r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_images_128.npy",
+#            r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_contour_200.npy"]
 
-# npy_dir = [[r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_images_128.npy",
-#            r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_contour_200.npy"],
-#            [r"C:/Users/jhong/Documents/Datasets/MRSpine1.1_remove_bad_images/MRSpineSeg_images_128.npy",
-#            r"C:/Users/jhong/Documents/Datasets/MRSpine1.1_remove_bad_images/MRSpineSeg_contour_200.npy"],
-#            [r"C:/Users/jhong/Documents/Datasets/VerSe_MICCAI_1.0/Verse20_MICCAI_images_128.npy",
-#             r"C:/Users/jhong/Documents/Datasets/VerSe_MICCAI_1.0/Verse20_MICCAI_contour_200.npy"]]
+npy_dir = [[r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_images_128.npy",
+           r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_contour_200.npy"],
+           [r"C:/Users/jhong/Documents/Datasets/MRSpine1.1_remove_bad_images/MRSpineSeg_images_128.npy",
+           r"C:/Users/jhong/Documents/Datasets/MRSpine1.1_remove_bad_images/MRSpineSeg_contour_200.npy"],
+           [r"C:/Users/jhong/Documents/Datasets/VerSe_MICCAI_1.0/Verse20_MICCAI_images_128.npy",
+            r"C:/Users/jhong/Documents/Datasets/VerSe_MICCAI_1.0/Verse20_MICCAI_contour_200.npy"]]
 
 # folder模式下从文件夹进行读取
 folder_dir = r"./MR_AVBCE_dataset"

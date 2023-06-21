@@ -9,7 +9,7 @@ import pickle
 import numpy as np
 
 from config import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
-from dataset import build_dataloader_alldataset
+from dataset import build_dataloader_alldataset_DSBN
 from models.UNet_head import UNet
 from models.UNet_DSBN import UNet_DSBN
 from models.CAT import CATkernel, ConVEF_model
@@ -44,7 +44,7 @@ if 'ff' in divide_mode:
 if data_loadmode == 'npy':  # 现在采用的是npy格式的数据。
     print("正在直接从numpy文件中载入三个数据集并合并")
     assert isinstance(npy_dir[0], list)
-    dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader_alldataset(npy_dir, image_size, divide_mode, batch_size, preload_mode=True, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L, instant_shuffle=shuffle_after_combine)
+    dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader_alldataset_DSBN(npy_dir, image_size, divide_mode, batch_size, preload_mode=True, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L, instant_shuffle=shuffle_after_combine)
     print("载入数据集：训练集长度：", len(dataset_train), "，测试集长度：", len(dataset_test), "，训练集迭代器长度：", len(dataloader_train), "，测试集迭代器长度：", len(dataloader_test))
 
 if os.path.exists(im_save_path) is False:
@@ -255,7 +255,6 @@ for i in range(resume_epoch + 1, epoch):
                                     gx=batch_gx1u[m, :, :], gy=batch_gy1u[m, :, :], Fu=batch_Fuu[m, :, :],
                                     Fv=batch_Fvu[m, :, :])
                     elif result_save_rule == 'data':
-                        save_snakeresulthist = [snake_result_list[m][ikk] for ikk in range(0, ACM_iterations, 10)]
                         now_savedata = {
                             "iou": iou,
                             "epoch": i,
@@ -265,7 +264,7 @@ for i in range(resume_epoch + 1, epoch):
                             "mapA": mapA[m, 0, :, :].cpu().numpy(),
                             "mapB": mapB[m, 0, :, :].cpu().numpy(),
                             "snake_result": snake_result[m, :, :],
-                            "snake_result_list": save_snakeresulthist,
+                            "snake_result_list": snake_result_list[m],
                             "GTContour": contour[m, :, :].cpu().numpy(),
                             "image": image[m, :, :, :].cpu().numpy(),
                             "gx": batch_gx1[m, :, :] if draw_force_field else None,
@@ -274,7 +273,6 @@ for i in range(resume_epoch + 1, epoch):
                             "Fv": batch_Fv[m, :, :] if draw_force_field else None
                         }
                         save_datalist.append(now_savedata)
-                        save_snakeresulthistu = [snake_result_listu[m][ikk] for ikk in range(0, ACM_iterations, 10)]
                         now_savedatau = {
                             "iou": iouu,
                             "epoch": i,
@@ -284,7 +282,7 @@ for i in range(resume_epoch + 1, epoch):
                             "mapA": mapAu[m, 0, :, :].cpu().numpy(),
                             "mapB": mapBu[m, 0, :, :].cpu().numpy(),
                             "snake_result": snake_resultu[m, :, :],
-                            "snake_result_list": save_snakeresulthistu,
+                            "snake_result_list": snake_result_listu[m],
                             "GTContour": contour[m, :, :].cpu().numpy(),
                             "image": image[m, :, :, :].cpu().numpy(),
                             "gx": batch_gx1u[m, :, :] if draw_force_field else None,
