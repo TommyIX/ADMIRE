@@ -1,3 +1,11 @@
-### ADMIRE
+## ADMIRE
 
 Official code repository for Medical Image Analysis paper "Attractive deep morphology-aware active contour network for vertebral body contour extraction with extensions to heterogeneous and semi-supervised scenarios" by Shen Zhao, Jinhong Wang, Xinxin Wang, Yikang Wang et al.
+
+### Introduction
+
+Automatic vertebral body contour extraction (AVBCE) from heterogeneous spinal MRI is indispensable for the comprehensive diagnosis and treatment of spinal diseases. However, AVBCE is challenging due to data heterogeneity, image characteristics complexity, and vertebral body morphology variations, which may cause morphology errors in semantic segmentation. Deep active contour-based (deep ACM-based) methods provide a promising complement for tackling morphology errors by directly parameterizing the contour coordinates. Extending the target contours’ capture range and providing morphology-aware parameter maps are crucial for deep ACM-based methods. 
+
+For this purpose, we propose a novel Attractive Deep Morphology-aware actIve contouR nEtwork (ADMIRE) that embeds an elaborated contour attraction term (CAT) and a comprehensive contour quality (CCQ) loss into the deep ACM-based framework. The CAT adaptively extends the target contours’ capture range by designing an all-to-all force field to enable the target contours’ energy to contribute to farther locations. Furthermore, the CCQ loss is carefully designed to generate morphology-aware active contour parameters by simultaneously supervising the contour shape, tension, and smoothness. These designs, in cooperation with the deep ACM-based framework, enable robustness to data heterogeneity, image characteristics complexity, and target contour morphology variations. Furthermore, the deep ACM-based ADMIRE is able to cooperate well with semi-supervised strategies such as mean teacher, which enables its function in semi-supervised scenarios. ADMIRE is trained and evaluated on four challenging datasets, including three spinal datasets with more than 1000 heterogeneous images and more than 10000 vertebrae bodies, as well as a cardiac dataset with both normal and pathological cases. Results show ADMIRE achieves state-of-the-art performance on all datasets, which proves ADMIRE’s accuracy, robustness, and generalization ability.
+
+### r
