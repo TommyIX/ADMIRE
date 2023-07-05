@@ -8,7 +8,7 @@ import signal
 import pickle
 import numpy as np
 
-from config import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
+from config.config_single import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
 from dataset import build_dataloader, build_dataloader_alldataset
 from models.ACStep import active_contour_process
 from models.UNet_head import UNet
@@ -42,13 +42,7 @@ if 'ff' in divide_mode:
     result_full_file.write("当前正在运行数据集五折交叉验证，模式为"+divide_mode+"，当前为第"+str(ff_fold_num)+"折\n")
 
 if data_loadmode == 'npy':  # 现在采用的是npy格式的数据。
-    # 判断npy_dir[0]为str还是list
-    if isinstance(npy_dir[0], str):
-        dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader(npy_dir, image_size, divide_mode, batch_size, preload_mode=True, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L)
-    else:
-        print("Combining %d datasets..."%len(npy_dir))
-        dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader_alldataset(npy_dir, image_size, divide_mode, batch_size, preload_mode=True, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L, instant_shuffle=shuffle_after_combine)
-    print("载入数据集：训练集长度：", len(dataset_train), "，测试集长度：", len(dataset_test), "，训练集迭代器长度：", len(dataloader_train), "，测试集迭代器长度：", len(dataloader_test))
+    dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader(npy_dir, image_size, divide_mode, batch_size, preload_mode=True, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L)
 else:
     print("正在从图像文件夹加载数据集")
     dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader(folder_dir, image_size, divide_mode, batch_size, preload_mode=False, imnum=image_num, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L)

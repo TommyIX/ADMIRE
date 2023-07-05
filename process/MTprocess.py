@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from process import PSMTramps
-from config import consistency, consistency_rampup
+from config.mixed_config.config import consistency, consistency_rampup
 
 def update_ema_variables(model, ema_model, alpha, global_step):
     # Use the true average until the exponential average is more correct

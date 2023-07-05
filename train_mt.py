@@ -8,7 +8,7 @@ import signal
 import pickle
 import numpy as np
 
-from config import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
+from config.config_mt import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
 from dataset import build_dataloader
 
 from models.UNet_head import UNet
@@ -233,6 +233,10 @@ for i in range(resume_epoch + 1, epoch):
 
                 if i >= mean_teacher_epochs:
                     update_ema_variables(model, ema_model, ema_decay, iter_num)
+
+            # 特定断电
+            if j == 5:
+                print("cut")
 
             # 计算模型指标
             with torch.no_grad():

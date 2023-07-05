@@ -1,6 +1,6 @@
 import torch
 from models.PolyProcess import draw_poly
-from config import image_size
+from config.mixed_config.config import image_size
 
 def auxevolvehandler(mapE, now_snake, m):
     snakepoly = draw_poly(now_snake.detach().cpu().numpy(), 1, [image_size, image_size],2)

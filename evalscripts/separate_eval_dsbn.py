@@ -8,7 +8,7 @@ import signal
 import pickle
 import numpy as np
 
-from config import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
+from config.mixed_config.config import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
 from dataset import build_dataloader_alldataset
 from models.ACStep import active_contour_process
 from models.UNet_DSBN import UNet_DSBN

@@ -7,7 +7,7 @@ from process.snake_initialization import initialize_snake
 from process.auxiliary_evolve_module import auxevolvehandler
 
 
-from config import *
+from config.mixed_config.config import *
 
 
 def snake_handler(i, mapE, mapA, mapB, batch_shape, CATkernelset, device, train_status, CATkernelset_dsp = None, CAT_dsp = None, CAT_usp = None):
