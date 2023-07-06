@@ -48,6 +48,6 @@ If you want pure evaluation, please change the do_train param to False, as well 
 
 ### Pretrained weights
 
-Due to data privacy factors, we are unable to provide MR_AVBCE dataset. However, we do provide pretrained weights on all datasets, and for the key comparative experiments such as mt/psmt on MR_AVBCE.
+Due to data privacy factors, we are unable to provide MR_AVBCE dataset. However, we do provide pretrained weights on all datasets, and for the key comparative experiments such as semi-supervised MT/PSMT on MR_AVBCE. 
 
-[The weights would soon be available on Google Drive and 123pan]
+Download links: [Google Drive](https://drive.google.com/drive/folders/1ZkXoHa3GsI7DZpFRz7DBffz4YUVkDjUY?usp=sharing)   [Baidu Netdisk](https://pan.baidu.com/s/1Hn4HJKWzVOuAmRaAUhgJ6Q?pwd=2p30)   [123Pan](https://www.123pan.com/s/NJGiVv-Q3rud.html)
