@@ -8,7 +8,7 @@ import signal
 import pickle
 import numpy as np
 
-from config.mixed_config.config import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
+from config.config_dsbn_mskt import *  # config.py里的所有变量都可以像写在这个py文件里一样，直接去用。
 from dataset import build_dataloader_alldataset
 from models.ACStep import active_contour_process
 from models.UNet_DSBN import UNet_DSBN
@@ -192,7 +192,7 @@ for i in range(resume_epoch + 1, epoch):
 
                     su, sv, shist = active_contour_process(init_snake, Fu, Fv, mapA[b,0,:,:], mapB[b,0,:,:],
                                                            mCATu=-gx1, mCATv=gy1, iteration=ACM_iterations, delta_s=ACM_paramset['delta_s'],
-                                                           CAT_force_weight=ACM_paramset['CAT_forceweight'], max_pixel_move=ACM_paramset['max_pixel_move'],
+                                                           CAT_force_weight=ACM_paramset['CAT_forceweight'], MAP_force_weight=ACM_paramset['Map_forceweight'], max_pixel_move=ACM_paramset['max_pixel_move'],
                                                            gamma=ACM_paramset['gamma'], device=device)
 
                     # 上句，蛇演化过程。确实火炬版本的放在这里，是带着数值演化的，比起tf版本更好看一些。锦宏修改的程序还是不错的。

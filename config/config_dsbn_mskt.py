@@ -30,6 +30,7 @@ max_ACM_reiter = 20  # 自适应ACM最多重试演化次数
 ACM_iterations = 300  # Emap-ACM 蛇演化次数
 CAT_Sharpness = 3  # 3.7在测试中是一个比较好的参数，适当增大锐度有助于提高性能
 ACM_paramset = {
+    "Map_forceweight": 30,  # MapE力场的权重
     "CAT_forceweight": 1,  # CAT力场的权重
     "delta_s": 1.8,  # Emap-ACM delta_s 参量
     "max_pixel_move": 2,  # Emap-ACM 最大允许运行长度

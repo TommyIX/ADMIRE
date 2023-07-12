@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-def active_contour_process(snake, Fu, Fv, mA, mB, mCATu, mCATv, iteration, delta_s, CAT_force_weight, max_pixel_move=1, gamma=2, device='cpu'):
+def active_contour_process(snake, Fu, Fv, mA, mB, mCATu, mCATv, iteration, delta_s, MAP_force_weight, CAT_force_weight, max_pixel_move=1, gamma=2, device='cpu'):
     '''
     这一版本的Active_contour_step彻底去除了气球力相关项
     同时翻译成了PyTorch版本
@@ -79,8 +79,8 @@ def active_contour_process(snake, Fu, Fv, mA, mB, mCATu, mCATv, iteration, delta
         # 以上2句，每个点受到的u/v方向的CAT力。
 
         # 当前速度
-        du = -max_pixel_move * torch.tanh((fu - CAT_force_weight * Cu) * gamma * 0.1) * 0.5
-        dv = -max_pixel_move * torch.tanh((fv - CAT_force_weight * Cv) * gamma * 0.1) * 0.5
+        du = -max_pixel_move * torch.tanh((MAP_force_weight * fu - CAT_force_weight * Cu) * gamma * 0.1) * 0.5
+        dv = -max_pixel_move * torch.tanh((MAP_force_weight * fv - CAT_force_weight * Cv) * gamma * 0.1) * 0.5
         # 以上2句，计算图像力和CAT力之和，也就是外力之和。
         # 好像这个CAT力没有加稀疏就直接和图像力fu/fv相减了，是不是可以加个系数让他变大一些？
         # 以及，确定要tanh吗？是不是因为这个使得外力复制最大就是1了，从而导致外力不够大，所以epoch-3-num-764、epoch-3-num-765等等那些搞不定？

@@ -191,7 +191,7 @@ for i in range(resume_epoch + 1, epoch):
                     while evolve_tries < max_ACM_reiter:
                         su, sv, shist = active_contour_process(now_snake, Fu, Fv, mapA[b,0,:,:], mapB[b,0,:,:],
                                                                mCATu=-gx1, mCATv=gy1, iteration=ACM_iteration_base, delta_s=ACM_paramset['delta_s'],
-                                                               CAT_force_weight=ACM_paramset['CAT_forceweight'], max_pixel_move=ACM_paramset['max_pixel_move'],
+                                                               CAT_force_weight=ACM_paramset['CAT_forceweight'], MAP_force_weight=ACM_paramset['Map_forceweight'], max_pixel_move=ACM_paramset['max_pixel_move'],
                                                                gamma=ACM_paramset['gamma'], device=device)
 
                         now_snake[:,0] = su[:, 0]
@@ -216,6 +216,7 @@ for i in range(resume_epoch + 1, epoch):
                                                            mCATu=-gx1, mCATv=gy1, iteration=ACM_iterations,
                                                            delta_s=ACM_paramset['delta_s'],
                                                            CAT_force_weight=ACM_paramset['CAT_forceweight'],
+                                                           MAP_force_weight=ACM_paramset['Map_forceweight'],
                                                            max_pixel_move=ACM_paramset['max_pixel_move'],
                                                            gamma=ACM_paramset['gamma'], device=device)
 
