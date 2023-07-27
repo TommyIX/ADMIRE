@@ -149,9 +149,6 @@ for dni in range(len(dataset_names)):
             Fu = torch.gradient(mapE[b,0,:,:],dim=0)[0]
             Fv = torch.gradient(mapE[b,0,:,:],dim=1)[0]
             # 以上，从u/v两个方向计算图像能量的导数。
-            # 另外，可否把mapE小于某一定值的地方设为1，而mapE较大的地方设为0，从而得到一个0-1的掩膜，
-            #     用这个掩膜乘以原图在u/v的导数（不是特征图的导数，因为原图在真实边界处似乎更精确），作为一个外力去演化蛇？
-            #     这个可以之后再试，或者如果需要让结果变好的时候再试。
 
             if not use_dsp_CAT or i >= dsp_stop_epoch:  # 计算CAT方向力
                 gx0, gy0 = ConVEF_model(mapE[b,0,:,:], Mx, My)
@@ -185,8 +182,6 @@ for dni in range(len(dataset_names)):
                                                    mCATu=-gx1, mCATv=gy1, iteration=ACM_iterations, delta_s=ACM_paramset['delta_s'],
                                                    CAT_force_weight=ACM_paramset['CAT_forceweight'], MAP_force_weight=ACM_paramset['Map_forceweight'], max_pixel_move=ACM_paramset['max_pixel_move'],
                                                    gamma=ACM_paramset['gamma'], device=device)
-
-            # 上句，蛇演化过程。确实火炬版本的放在这里，是带着数值演化的，比起tf版本更好看一些。锦宏修改的程序还是不错的。
 
             snake_result[b, :, 0] = su.detach().cpu().numpy()[:,0]
             snake_result[b, :, 1] = sv.detach().cpu().numpy()[:,0]

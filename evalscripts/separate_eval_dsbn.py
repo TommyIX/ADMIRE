@@ -158,9 +158,6 @@ for i in range(resume_epoch + 1, epoch):
                     Fu = torch.gradient(mapE[b,0,:,:],dim=0)[0]
                     Fv = torch.gradient(mapE[b,0,:,:],dim=1)[0]
                     # 以上，从u/v两个方向计算图像能量的导数。
-                    # 另外，可否把mapE小于某一定值的地方设为1，而mapE较大的地方设为0，从而得到一个0-1的掩膜，
-                    #     用这个掩膜乘以原图在u/v的导数（不是特征图的导数，因为原图在真实边界处似乎更精确），作为一个外力去演化蛇？
-                    #     这个可以之后再试，或者如果需要让结果变好的时候再试。
 
                     if not use_dsp_CAT or i >= dsp_stop_epoch:  # 计算CAT方向力
                         gx0, gy0 = ConVEF_model(mapE[b,0,:,:], Mx, My)
@@ -195,8 +192,6 @@ for i in range(resume_epoch + 1, epoch):
                                                            CAT_force_weight=ACM_paramset['CAT_forceweight'], MAP_force_weight=ACM_paramset['Map_forceweight'], max_pixel_move=ACM_paramset['max_pixel_move'],
                                                            gamma=ACM_paramset['gamma'], device=device)
 
-                    # 上句，蛇演化过程。确实火炬版本的放在这里，是带着数值演化的，比起tf版本更好看一些。锦宏修改的程序还是不错的。
-
                     snake_result[b, :, 0] = su.detach().cpu().numpy()[:,0]
                     snake_result[b, :, 1] = sv.detach().cpu().numpy()[:,0]
                     snake_result_list.append(shist)
@@ -206,10 +201,7 @@ for i in range(resume_epoch + 1, epoch):
                 batch_mask = batch_mask_convert(contour, [image_size, image_size])
                 if train_status:
                     total_loss = CCQLoss.apply(mapEo, mapAo, mapBo, snake_result, contour, image_size, batch_shape, batch_mask)
-                    # 上句，计算CCQ损失。发现有些地方，好像CNN弄的是对的，但是蛇轮廓演化不对，比如说epoch-2-num-4268这张。
-                    #     有没有可能弄蛇上点损失呢？之前锦宏说需要for循环特别慢，但是好像不一定需要吧，矩阵操作应该就可以的。之前tf的MRCNN里有计算所有金标准和预测外接矩形的IOU的，这个应该也可以类似的方法。。
-                    #     然后又看了一些不太好的，比如说epoch-3-num-764、epoch-3-num-765等等，感觉这是蛇演化的问题啊，基本上E图是对的，
-                    #     而，如果初始化在蛇里面的，就不太行（应该对应锦宏说的椎骨在边上那些），是不是因为CAT力太小了，弄不过去。。
+                    # 上句，计算CCQ损失。
                     total_loss.backward()
                     optimizer.step()
                     scheduler.step()

@@ -1,7 +1,6 @@
 '''
 CCQLoss.py
-作者：王锦宏
-转移tensorflow版本ADMIRE代码中不可微的求grad过程，实现反向传播的最后一环
+Jinhong Wang
 '''
 
 import torch

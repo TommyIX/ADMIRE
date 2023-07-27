@@ -82,32 +82,12 @@ def active_contour_process(snake, Fu, Fv, mA, mB, mCATu, mCATv, iteration, delta
         du = -max_pixel_move * torch.tanh((MAP_force_weight * fu - CAT_force_weight * Cu) * gamma * 0.1) * 0.5
         dv = -max_pixel_move * torch.tanh((MAP_force_weight * fv - CAT_force_weight * Cv) * gamma * 0.1) * 0.5
         # 以上2句，计算图像力和CAT力之和，也就是外力之和。
-        # 好像这个CAT力没有加稀疏就直接和图像力fu/fv相减了，是不是可以加个系数让他变大一些？
-        # 以及，确定要tanh吗？是不是因为这个使得外力复制最大就是1了，从而导致外力不够大，所以epoch-3-num-764、epoch-3-num-765等等那些搞不定？
-        '''
-        王一康答复: 为了实现max_pixel_move的效果, 这里先用tanh把外力映射到(-1,1)之间, 然后乘0.5再乘max_pixel_move
-        这样子值域就是(-0.5*max_pixel_move, 0.5*max_pixel_move), 允许的最大移动距离就是max_pixel_move
-        所以为了保持它的意义, 这里的0.5和tanh是必须的. 或者可以用别的什么函数把外力最后映射到(-0.5,0.5)也可以
-        如果想要让它变大一点, 可以在调用这个函数的时候把max_pixel_move调大一点, 因为它是超参数
-
-        还有一个想法, 现在的做法是把外力映射到一个值域为(-0.5*max_pixel_move, 0.5*max_pixel_move)的连续函数上
-        但是tanh的映射会不会把本来较小的外力映射得更小呢? 如果输入的值是1, 那么输出就是tanh(1)=0.76, 小了将近25%
-        有没有别的什么函数能够克服这个缺点呢? 最简单的y=x可以吗? 
-        这样就不会出现把外力映射得更小的情况了, 然后超过上面说的这个值域的时候就直接截断取最大最小值, 变成一个分段函数, 这样不知道可不可行?
-
-        (与这里的代码没什么关系, 单纯记录一下想法)昨晚训练的时候发现的, 当演化的线一部分已经几乎贴合椎骨的一条边缘了, 但是由于椎骨的形状特点, 这根线的剩余部分可能跟椎骨的其他边缘夹角甚至有90°
-        这种情况下要把这根线的剩余部分在演化的过程中旋转90°贴合另一条边缘需要很多轮的迭代, 而在这个迭代的过程中本来贴合的那个部分也会跟着一起向里走(即使步长不大)
-        当这种迭代经过很多轮之后, 本来贴合边缘的那部分演化线会被越拉越远, 而且离得越远它下一次迭代时就会被拉的更远(因为受到的力更小了), 从而最后离得太远吸不到原来的那个边缘
-        我试试把max_pixel_move调大一点, 让这种情况发生的时候能够用更少的迭代次数就把演化线拉到相应的边缘上, 避免本来就贴合的那部分被拉的太远
-        或者可不可以设置只要演化线上某个点前后两次的移动距离小于某个值就让这个点固定住, 不再参与演化
-        '''
 
         # 以下，蛇迭代过程，014文章中的12式，或者我们文章中的5式。
         u = torch.matmul(torch.inverse(torch.eye(L).to(device) + 2 * gamma * (A / delta_s + B / (delta_s * delta_s))), (u + gamma * du.unsqueeze(1)).to(torch.float32))
         v = torch.matmul(torch.inverse(torch.eye(L).to(device) + 2 * gamma * (A / delta_s + B / (delta_s * delta_s))), (v + gamma * dv.unsqueeze(1)).to(torch.float32))
         # 以上2句，torch.matmul中第一项用torch.inverse求逆的，对应我们文章5式中的M_1矩阵的逆矩阵，反映内力作用；
         #     第二项含du的，对应的是5式括号里的位移项，反映外力作用。
-        # 以及，这个delta_s是不是其实可以取1来着？因为文章里取的是1。
 
         u = torch.minimum(u, torch.tensor(M - 1))  # 以下，裁剪与保存。
         v = torch.minimum(v, torch.tensor(N - 1))

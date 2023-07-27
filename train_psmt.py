@@ -107,7 +107,7 @@ def snake_handler(i, mapE, mapA, mapB, batch_shape, CATkernelset, device, train_
                 shistall += shist
                 evolve_tries += 1
 
-                coincide_rate = auxevolvehandler(mapE[b, 0, :, :], now_snake, b)
+                coincide_rate = auxevolvehandler(mapE[b, 0, :, :], now_snake, image_size)
                 if coincide_rate > 0.9:  # 判定为基本收敛
                     print("[Converge:%d]" % evolve_tries, end='')
                     break
