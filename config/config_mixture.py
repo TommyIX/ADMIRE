@@ -18,6 +18,9 @@ snake_init_scale = 0.8  # 蛇的直径占据边长的比例
 use_located_snake_init = True  # 是否通过mapE定位进行蛇初始化 (wyk蛇定位代码)
 located_init_start_epoch = 0   # 开始使用定位蛇初始化的epoch
 
+morph_op_train = True  # 是否在训练时进行形态学操作
+morph_op_test = True  # 是否在测试时进行形态学操作
+
 # ACM参数 ----------------------------------------------------------------------------
 L = 200  # 蛇算法采样点数量
 

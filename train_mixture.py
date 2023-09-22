@@ -3,6 +3,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 # 防止forrtl: error (200)代替KeyboardInterrupt，保证中断时可以保存权重
 
+import cv2
 import torch
 import signal
 import pickle
@@ -120,9 +121,23 @@ for i in range(resume_epoch + 1, epoch):
             mapEo, mapAo, mapBo = model(image)  # 输出三个蛇参数图。
 
             with torch.no_grad():
-                mapE = map_normalization(mapEo,batch_shape) * 12
-                mapB = map_normalization(mapBo,batch_shape)
-                mapA = map_normalization(mapAo,batch_shape)
+                if morph_op_train and train_status or morph_op_test and not train_status:
+                    mapE = map_normalization(mapEo,batch_shape).cpu().detach().numpy().squeeze()
+                    mapB = map_normalization(mapBo,batch_shape).cpu().detach().numpy().squeeze()
+                    mapA = map_normalization(mapAo,batch_shape).cpu().detach().numpy().squeeze()
+                    mapE = cv2.dilate(mapE, np.ones((3, 3), np.uint8), iterations=1)
+                    mapB = cv2.dilate(mapB, np.ones((3, 3), np.uint8), iterations=1)
+                    mapA = cv2.dilate(mapA, np.ones((3, 3), np.uint8), iterations=1)
+                    mapE = cv2.erode(mapE, np.ones((2, 2), np.uint8), iterations=2)
+                    mapB = cv2.erode(mapB, np.ones((2, 2), np.uint8), iterations=2)
+                    mapA = cv2.erode(mapA, np.ones((2, 2), np.uint8), iterations=2)
+                    mapE = torch.from_numpy(mapE.reshape((1,1,128,128))).to(device) * 12
+                    mapB = torch.from_numpy(mapB.reshape((1,1,128,128))).to(device)
+                    mapA = torch.from_numpy(mapA.reshape((1,1,128,128))).to(device)
+                else:
+                    mapE = map_normalization(mapEo,batch_shape) * 12
+                    mapB = map_normalization(mapBo,batch_shape)
+                    mapA = map_normalization(mapAo,batch_shape)
                 # 以上，蛇参数图归一化，并且缩放到合适的大小。12 0.7 0.65都是超参数。（注：这里修改了一下参数）
 
             snake_result = np.zeros([batch_shape, L, 2])

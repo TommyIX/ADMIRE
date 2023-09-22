@@ -7,11 +7,13 @@ ADMIRE dataset.py
 
 import os
 import cv2
+import copy
+import tqdm
 import torch
 import imageio
 import numpy as np
 
-from skimage.transform import resize
+from skimage.transform import resize, rotate
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from process.getGT import getGT_single
@@ -83,6 +85,30 @@ class ADMDataset(Dataset):
                 # 以上，构建测试集。
         # 其他情况（mode==no的情况）下不划分测试集，返回即可
 
+        # 对数据集进行旋转扩增，每张图像旋转8次，每次45度，contour绕中心(64,64)旋转
+        if status == 'train':
+            print("正在进行训练集图像扩增...")
+            basicimnum = len(self.image)
+            for deg in tqdm.tqdm(range(30, 360, 30)):
+                for i in range(0, basicimnum):
+                    self.image.append(rotate(self.image[i], deg, center=(imgsize/2, imgsize/2)))
+                    # 计算当前contour极坐标
+                    newcontour = np.zeros_like(self.contour[i])
+                    for j in range(0, len(self.contour[i])):
+                        # 计算self.contour[i][j]相对于图像中心的极坐标
+                        r = np.sqrt((self.contour[i][j][0]-imgsize/2)**2 + (self.contour[i][j][1]-imgsize/2)**2)
+                        theta = np.arctan2(self.contour[i][j][1]-imgsize/2, self.contour[i][j][0]-imgsize/2)
+                        # 计算旋转后的极坐标
+                        r_new = r
+                        theta_new = theta + deg/180*np.pi
+                        # 计算旋转后的contour坐标
+                        newcontour[j][0] = r_new * np.cos(theta_new) + imgsize/2
+                        newcontour[j][1] = r_new * np.sin(theta_new) + imgsize/2
+                    self.contour.append(newcontour)
+            self.instant_shuffle(ff_random_seed)
+
+
+
     def __getitem__(self, index):
         # 因为torch.nn处理格式为[channel, imx, imy]，因此对图像进行一下轴替换
         im = np.transpose(self.image[index], [2, 0, 1])
@@ -92,7 +118,7 @@ class ADMDataset(Dataset):
         self.image += other.image
         self.contour += other.contour
         self.imnum += other.imnum
-        return self
+        return copy.deepcopy(self) # 返回深拷贝，防止原数据集被修改
 
     def __len__(self):
         return len(self.image)
@@ -102,7 +128,6 @@ class ADMDataset(Dataset):
         np.random.shuffle(self.image)
         np.random.seed(seed)
         np.random.shuffle(self.contour)
-
 
 class ADMDataset_DSBN(Dataset):
     def __init__(self, dir, imgsize, mode, status, imnum=1, preload_mode=False, ff_fold_num=0, ff_random_seed=0, L_Points=None, imfrom = 0):
@@ -205,18 +230,50 @@ class ADMDataset_DSBN(Dataset):
         np.random.seed(seed)
         np.random.shuffle(self.imfrom)
 
-
-def build_dataloader(dir, img_size, mode, batch_size, preload_mode=False, imnum=1, ff_fold_num=0, ff_random_seed=0, L_Points=None):
-    if mode == 'no':
-        dataset_train = ADMDataset(dir, img_size, mode, 'all_train', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
-        loader_train = DataLoader(dataset_train, batch_size=batch_size, num_workers=0)
-        return dataset_train, None, loader_train, None
+def build_dataloader(dir, img_size, mode, batch_size, preload_mode=False, imnum=1, ff_fold_num=0, ff_random_seed=0, L_Points=None, ACDC_mode=False):
+    if ACDC_mode:
+        dir_prefix = [dir[0].split('ACDC')[0],
+                      dir[1].split('ACDC')[0]]
+        dir_suffix = [dir[0].split('/')[-1],
+                      dir[1].split('/')[-1]]
+        dir_ED = [dir_prefix[0] + 'ED_' + dir_suffix[0],
+                  dir_prefix[1] + 'ED_' + dir_suffix[1]]
+        dir_ES = [dir_prefix[0] + 'ES_' + dir_suffix[0],
+                  dir_prefix[1] + 'ES_' + dir_suffix[1]]
+        if mode == 'no':
+            datasetED_train = ADMDataset(dir_ED, img_size, mode, 'all_train', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            datasetES_train = ADMDataset(dir_ES, img_size, mode, 'all_train', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            dataset_train = datasetED_train + datasetES_train
+            # dataset_train = ADMDataset(dir, img_size, mode, 'all_train', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            loader_train = DataLoader(dataset_train, batch_size=batch_size, num_workers=0)
+            return dataset_train, None, loader_train, None
+        else:
+            datasetED_train = ADMDataset(dir_ED, img_size, mode, 'train', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            datasetES_train = ADMDataset(dir_ES, img_size, mode, 'train', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            datasetED_test = ADMDataset(dir_ED, img_size, mode, 'test', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            datasetES_test = ADMDataset(dir_ES, img_size, mode, 'test', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            dataset_train = datasetED_train + datasetES_train
+            # dataset_test = datasetED_test + datasetES_test
+            # dataset_train = ADMDataset(dir, img_size, mode, 'train', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            # dataset_test = ADMDataset(dir, img_size, mode, 'test', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
+            loader_train = DataLoader(dataset_train, batch_size=batch_size, num_workers=0)
+            loaderED_test = DataLoader(datasetED_test, batch_size=batch_size, num_workers=0)
+            loaderES_test = DataLoader(datasetES_test, batch_size=batch_size, num_workers=0)
+            return dataset_train, [datasetED_test, datasetES_test], loader_train, [loaderED_test, loaderES_test]
     else:
-        dataset_train = ADMDataset(dir, img_size, mode, 'train', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
-        dataset_test = ADMDataset(dir, img_size, mode, 'test', imnum, preload_mode, ff_fold_num, ff_random_seed, L_Points)
-        loader_train = DataLoader(dataset_train, batch_size=batch_size, num_workers=0)
-        loader_test = DataLoader(dataset_test, batch_size=batch_size, num_workers=0)
-        return dataset_train, dataset_test, loader_train, loader_test
+        if mode == 'no':
+            dataset_train = ADMDataset(dir, img_size, mode, 'all_train', imnum, preload_mode, ff_fold_num,
+                                       ff_random_seed, L_Points)
+            loader_train = DataLoader(dataset_train, batch_size=batch_size, num_workers=0)
+            return dataset_train, None, loader_train, None
+        else:
+            dataset_train = ADMDataset(dir, img_size, mode, 'train', imnum, preload_mode, ff_fold_num, ff_random_seed,
+                                       L_Points)
+            dataset_test = ADMDataset(dir, img_size, mode, 'test', imnum, preload_mode, ff_fold_num, ff_random_seed,
+                                      L_Points)
+            loader_train = DataLoader(dataset_train, batch_size=batch_size, num_workers=0)
+            loader_test = DataLoader(dataset_test, batch_size=batch_size, num_workers=0)
+            return dataset_train, dataset_test, loader_train, loader_test
 
 def build_dataloader_alldataset(alldirs, img_size, mode, batch_size, preload_mode=False, imnum=1, ff_fold_num=0, ff_random_seed=0, L_Points=None, instant_shuffle=False):
     datasets_train = []

@@ -18,6 +18,9 @@ snake_init_scale = 0.8  # 蛇的直径占据边长的比例
 use_located_snake_init = True  # 是否通过mapE定位进行蛇初始化 (wyk蛇定位代码)
 located_init_start_epoch = 0   # 开始使用定位蛇初始化的epoch
 
+morph_op_train = True  # 是否在训练时进行形态学操作
+morph_op_test = True  # 是否在测试时进行形态学操作
+
 # ACM参数 ----------------------------------------------------------------------------
 L = 200  # 蛇算法采样点数量
 
@@ -30,11 +33,11 @@ max_ACM_reiter = 20  # 自适应ACM最多重试演化次数
 ACM_iterations = 300  # Emap-ACM 蛇演化次数
 CAT_Sharpness = 3  # 3.7在测试中是一个比较好的参数，适当增大锐度有助于提高性能
 ACM_paramset = {
-    "Map_forceweight": 30,  # MapE力场的权重
-    "CAT_forceweight": 1,  # CAT力场的权重
-    "delta_s": 1.8,  # Emap-ACM delta_s 参量
-    "max_pixel_move": 2,  # Emap-ACM 最大允许运行长度
-    "gamma": 2.2  # Emap-ACM gamma 参量
+    "Map_forceweight": 5,  # MapE力场的权重# 30
+    "CAT_forceweight": 1.1,  # CAT力场的权重 # 1
+    "delta_s": 1.8,  # Emap-ACM delta_s 参量 # 1.8
+    "max_pixel_move": 2,  # Emap-ACM 最大允许运行长度 # 2
+    "gamma": 2.2  # Emap-ACM gamma 参量 # 2.2
 }
 
 # 数据读取 ----------------------------------------------------------------------------
@@ -48,8 +51,9 @@ ff_fold_num = 0  # 使用五折划分的情况下，当前程序运行的五折�
 ffrad_seed = 233  # 随机打乱五折情况下的种子
 
 # npy模式下读取现有的已打包数据集npy文件
-npy_dir = [r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_images_128.npy",
-           r"C:/Users/jhong/Documents/Datasets/ADMcontour1.0/ADM_contour_200.npy"]
+npy_dir = ["./data/ACDC_RV_images_128_2.0.npy",
+           "./data/ACDC_RV_contour_200_2.0.npy"]
+ACDC_mdoe = False  # 如果为True，将自动添加ES/ED前缀
 
 # folder模式下从文件夹进行读取
 folder_dir = r"./MR_AVBCE_dataset"
@@ -57,7 +61,7 @@ image_num = 4601
 
 # 模型权重读取 -------------------------------------------------------------------------
 resume_training = False  # 是否加载保存的权重，继续训练
-load_ckpt_dir = './checkpoints/ADMIRE_model_19.pth'
+load_ckpt_dir = './checkpoints/ADMIRE_model_7.pth'
 
 # 保存结果 ----------------------------------------------------------------------------
 result_save_rule = 'data'   # 或者'img'，img为在result文件夹中保存所有图片数据，data直接保存训练时输出的图片等等，可以使用imviewer来查看

@@ -1,5 +1,5 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 # 防止forrtl: error (200)代替KeyboardInterrupt，保证中断时可以保存权重
 
@@ -43,7 +43,7 @@ if 'ff' in divide_mode:
     result_full_file.write("当前正在运行数据集五折交叉验证，模式为"+divide_mode+"，当前为第"+str(ff_fold_num)+"折\n")
 
 if data_loadmode == 'npy':  # 现在采用的是npy格式的数据。
-    dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader(npy_dir, image_size, divide_mode, batch_size, preload_mode=True, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L)
+    dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader(npy_dir, image_size, divide_mode, batch_size, preload_mode=True, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L, ACDC_mode=True)
 else:
     print("正在从图像文件夹加载数据集")
     dataset_train, dataset_test, dataloader_train, dataloader_test = build_dataloader(folder_dir, image_size, divide_mode, batch_size, preload_mode=False, imnum=image_num, ff_fold_num=ff_fold_num, ff_random_seed=ffrad_seed, L_Points=L)
@@ -87,13 +87,22 @@ if use_dsp_CAT:  # 下采样CAT模型，有助于提高训练速度(此处为卷
 print("准备开始训练")
 for i in range(resume_epoch + 1, epoch):
     train_status = False
-    for now_dataloader in [dataloader_train, dataloader_test]:
+    for dataset_idx, now_dataloader in enumerate([dataloader_train, dataloader_test[0], dataloader_test[1]]):
         # 使用代码复用的训练-测试转换，只在训练时执行反向传播
         full_iou = []
         full_dice = []
         full_wcov = []
         full_mbf = []
-        train_status = not train_status
+
+        if dataset_idx % 3 == 0:
+            train_status = not train_status
+            dataset_name = 'ALL'
+        elif dataset_idx % 3 == 1:
+            train_status = not train_status
+            dataset_name = 'ED'
+        else:
+            dataset_name = 'ES'
+
         if divide_mode == 'no' and train_status == False:  # 这种情况下不划分训练/测试集，此时测试集为None，直接开启下一个循环即可
             continue
 
@@ -112,9 +121,9 @@ for i in range(resume_epoch + 1, epoch):
 
             modetitle = 'Train ' if train_status else 'Test '
             if batch_shape > 1:
-                print(modetitle + "Epoch %d, Batch %d" % (i, j), end='')
+                print(modetitle + dataset_name + " Epoch %d, Batch %d" % (i, j), end='')
             else:
-                print(modetitle + "Epoch %d, Image %d" % (i, j), end='')
+                print(modetitle + dataset_name + " Epoch %d, Image %d" % (i, j), end='')
 
             mapEo, mapAo, mapBo = model(image)  # 输出三个蛇参数图。
 
@@ -164,6 +173,9 @@ for i in range(resume_epoch + 1, epoch):
                 Fu = torch.gradient(mapE[b,0,:,:],dim=0)[0]
                 Fv = torch.gradient(mapE[b,0,:,:],dim=1)[0]
                 # 以上，从u/v两个方向计算图像能量的导数。
+                # 另外，可否把mapE小于某一定值的地方设为1，而mapE较大的地方设为0，从而得到一个0-1的掩膜，
+                #     用这个掩膜乘以原图在u/v的导数（不是特征图的导数，因为原图在真实边界处似乎更精确），作为一个外力去演化蛇？
+                #     这个可以之后再试，或者如果需要让结果变好的时候再试。
 
                 if not use_dsp_CAT or i >= dsp_stop_epoch:  # 计算CAT方向力
                     gx0, gy0 = ConVEF_model(mapE[b,0,:,:], Mx, My)
@@ -209,7 +221,7 @@ for i in range(resume_epoch + 1, epoch):
                         shistall += shist
                         evolve_tries += 1
 
-                        coincide_rate = auxevolvehandler(mapE[b, 0, :, :], now_snake, image_size)
+                        coincide_rate = auxevolvehandler(mapE[b, 0, :, :], now_snake, b)
                         if coincide_rate > 0.9:  # 判定为基本收敛
                             print("[Converge:%d]"%evolve_tries, end='')
                             break
@@ -238,8 +250,10 @@ for i in range(resume_epoch + 1, epoch):
             batch_mask = batch_mask_convert(contour, [image_size, image_size])
             if train_status:
                 total_loss = CCQLoss.apply(mapEo, mapAo, mapBo, snake_result, contour, image_size, batch_shape, batch_mask)
-                # 上句，计算CCQ损失。
-
+                # 上句，计算CCQ损失。发现有些地方，好像CNN弄的是对的，但是蛇轮廓演化不对，比如说epoch-2-num-4268这张。
+                #     有没有可能弄蛇上点损失呢？之前锦宏说需要for循环特别慢，但是好像不一定需要吧，矩阵操作应该就可以的。之前tf的MRCNN里有计算所有金标准和预测外接矩形的IOU的，这个应该也可以类似的方法。。
+                #     然后又看了一些不太好的，比如说epoch-3-num-764、epoch-3-num-765等等，感觉这是蛇演化的问题啊，基本上E图是对的，
+                #     而，如果初始化在蛇里面的，就不太行（应该对应锦宏说的椎骨在边上那些），是不是因为CAT力太小了，弄不过去。。
                 total_loss.backward()
                 optimizer.step()
                 scheduler.step()
@@ -285,7 +299,7 @@ for i in range(resume_epoch + 1, epoch):
                             "iou": iou,
                             "epoch": i,
                             "imnum": j*batch_size+m,
-                            "status": 'train' if train_status else 'test',
+                            "status": 'train' if train_status else 'test' + dataset_name,
                             "mapE": mapE[m,0,:,:].cpu().numpy(),
                             "mapA": mapA[m,0,:,:].cpu().numpy(),
                             "mapB": mapB[m,0,:,:].cpu().numpy(),
@@ -308,7 +322,7 @@ for i in range(resume_epoch + 1, epoch):
                         print(", loss: %.2f\n" % (total_loss.item()), end='')
                     else:
                         print("\n", end='')
-                    result_file.write(modetitle + "Epoch %d, Batch %d, Avg IoU: %.4f, Avg Dice: %.4f, Avg mBF: %.4f, Avg WCov: %.4f" % (i, j, sum(ioulist) / len(ioulist), sum(dicelist) / len(dicelist),sum(boundflist) / len(boundflist), sum(wcovlist) / len(wcovlist)))
+                    result_file.write(modetitle + dataset_name + " Epoch %d, Batch %d, Avg IoU: %.4f, Avg Dice: %.4f, Avg mBF: %.4f, Avg WCov: %.4f" % (i, j, sum(ioulist) / len(ioulist), sum(dicelist) / len(dicelist),sum(boundflist) / len(boundflist), sum(wcovlist) / len(wcovlist)))
                     if train_status:
                         result_file.write(", loss: %.2f\n" % (total_loss.item()))
                     else:
@@ -319,19 +333,19 @@ for i in range(resume_epoch + 1, epoch):
                         print(", loss: %.2f\n" % (total_loss.item()), end='')
                     else:
                         print("\n", end='')
-                    result_file.write(modetitle + "Epoch %d, Im %d, IoU: %.4f, Dice: %.4f, mBF: %.4f, WCov: %.4f" % (i, j, sum(ioulist) / len(ioulist), sum(dicelist) / len(dicelist) ,sum(boundflist) / len(boundflist), sum(wcovlist) / len(wcovlist)))
+                    result_file.write(modetitle + dataset_name + " Epoch %d, Im %d, IoU: %.4f, Dice: %.4f, mBF: %.4f, WCov: %.4f" % (i, j, sum(ioulist) / len(ioulist), sum(dicelist) / len(dicelist) ,sum(boundflist) / len(boundflist), sum(wcovlist) / len(wcovlist)))
                     if train_status:
                         result_file.write(", loss: %.2f\n" % (total_loss.item()))
                     else:
                         result_file.write("\n")
             if force_stop:
-                torch.save(model.state_dict(), model_save_path + 'ADMIRE_model_%d_forcestop_%s_batchim_%d.pth' % (i, modetitle.strip(), (j+1)*batch_size))
-                pickle.dump(save_datalist, open(im_save_path + 'ADMIRE_resultdata_epoch_%d_forcestop_%s_batchim_%d.pkl' % (i, modetitle.strip(), (j+1)*batch_size), 'wb'))
-                print("\n(*)中断权重文件已保存至", model_save_path + 'ADMIRE_model_%d_forcestop_%s_batchim_%d.pth' % (i, modetitle.strip(), (j + 1) * batch_size))
-                print("\n(*)中断结果数据已保存至", im_save_path + 'ADMIRE_resultdata_epoch_%d_forcestop_%s_batchim_%d.pkl' % (i, modetitle.strip(), (j + 1) * batch_size))
+                torch.save(model.state_dict(), model_save_path + 'ADMIRE_model_%d_forcestop_%s_batchim_%d.pth' % (i, modetitle.strip()+dataset_name, (j+1)*batch_size))
+                pickle.dump(save_datalist, open(im_save_path + 'ADMIRE_resultdata_epoch_%d_forcestop_%s_batchim_%d.pkl' % (i, modetitle.strip()+dataset_name, (j+1)*batch_size), 'wb'))
+                print("\n(*)中断权重文件已保存至", model_save_path + 'ADMIRE_model_%d_forcestop_%s_batchim_%d.pth' % (i, modetitle.strip()+dataset_name, (j + 1) * batch_size))
+                print("\n(*)中断结果数据已保存至", im_save_path + 'ADMIRE_resultdata_epoch_%d_forcestop_%s_batchim_%d.pkl' % (i, modetitle.strip()+dataset_name, (j + 1) * batch_size))
                 exit(500)
 
-        pickle.dump(save_datalist, open(im_save_path + 'ADMIRE_resultdata_epoch_%d_%s_data.pkl' % (i, modetitle.strip()), 'wb'))
+        pickle.dump(save_datalist, open(im_save_path + 'ADMIRE_resultdata_epoch_%d_%s_data.pkl' % (i, modetitle.strip()+dataset_name), 'wb'))
         save_datalist.clear()
 
         if train_status and do_train:  # 结束训练后保存模型checkpoint
@@ -343,8 +357,8 @@ for i in range(resume_epoch + 1, epoch):
             result_file.write("Train")
             result_full_file.write("Train")
         else:
-            result_file.write("Test")
-            result_full_file.write("Test")
+            result_file.write("Test " + dataset_name)
+            result_full_file.write("Test " + dataset_name)
         result_file.write(" Epoch %d, Avg IoU: %.4f, Avg Dice: %.4f, Avg mBF: %.4f, Avg WCov: %.4f\n" % (i, sum(full_iou)/len(full_iou), sum(full_dice)/len(full_dice), sum(full_mbf)/len(full_mbf), sum(full_wcov)/len(full_wcov)))
         result_full_file.write(" Epoch %d, Avg IoU: %.4f, Avg Dice: %.4f, Avg mBF: %.4f, Avg WCov: %.4f\n" % (i, sum(full_iou)/len(full_iou), sum(full_dice)/len(full_dice), sum(full_mbf)/len(full_mbf), sum(full_wcov)/len(full_wcov)))
         result_file.write("--------------------------------------------------------\n\n\n")

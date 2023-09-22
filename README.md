@@ -2,6 +2,20 @@
 
 Official code repository for Medical Image Analysis paper "Attractive deep morphology-aware active contour network for vertebral body contour extraction with extensions to heterogeneous and semi-supervised scenarios" by Shen Zhao, Jinhong Wang, Xinxin Wang, Yikang Wang et al.
 
+
+### Citation
+```bibtex
+@article{zhao2023attractive,
+  title={Attractive deep morphology-aware active contour network for vertebral body contour extraction with extensions to heterogeneous and semi-supervised scenarios},
+  author={Zhao, Shen and Wang, Jinhong and Wang, Xinxin and Wang, Yikang and Zheng, Hanying and Chen, Bin and Zeng, An and Wei, Fuxin and Al-Kindi, Sadeer and Li, Shuo},
+  journal={Medical Image Analysis},
+  volume={89},
+  pages={102906},
+  year={2023},
+  publisher={Elsevier}
+}
+```
+
 ### Introduction
 
 Attractive Deep Morphology-aware actIve contouR nEtwork (ADMIRE) is a novel network that embeds an elaborated contour attraction term (CAT) and a comprehensive contour quality (CCQ) loss into the deep ACM-based framework to conduct Automatic vertebral body contour extraction (AVBCE). The CAT adaptively extends the target contours’ capture range by designing an all-to-all force field to enable the target contours’ energy to contribute to farther locations. Furthermore, the CCQ loss is carefully designed to generate morphology-aware active contour parameters by simultaneously supervising the contour shape, tension, and smoothness.
@@ -34,6 +48,7 @@ There are five python files(*.py) that you can use for training and evaluating A
 
 ```
  - train_single.py: training on single dataset
+ - train_single_ACDC.py: training on ACDC dataset (Same with train_single.py with auto process ES and ED)
  - train_multiple.py: training on mixed datasets
  - train_dsbn_mskt.py: training on mixed dataset using DSBN and MSKT strategy (not applicable for single dataset)
  - train_mt.py: conduct semi-supervised training using mean teacher strategy on single dataset
@@ -51,3 +66,8 @@ If you want pure evaluation, please change the do_train param to False, as well 
 Due to data privacy factors, we are unable to provide MR_AVBCE dataset. However, we do provide pretrained weights on all datasets, and for the key comparative experiments such as semi-supervised MT/PSMT on MR_AVBCE. 
 
 Download links: [Google Drive](https://drive.google.com/drive/folders/1ZkXoHa3GsI7DZpFRz7DBffz4YUVkDjUY?usp=sharing)   [Baidu Netdisk](https://pan.baidu.com/s/1Hn4HJKWzVOuAmRaAUhgJ6Q?pwd=2p30)   [123Pan](https://www.123pan.com/s/NJGiVv-Q3rud.html)
+
+
+### Contact
+
+You are welcomed to open an issue if you have any question regarding to the paper or the code. You can also contact me via email: [Jinhong Wang](mailto:Jinhong.Wang@mbzuai.ac.ae)
